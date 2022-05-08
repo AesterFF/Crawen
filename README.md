@@ -18,7 +18,8 @@ While installing our OS you will get preinstalled:
 - Custom Powerplan
 - Optimized Services and Drivers
 - CPU, GPU, SDD Optimizations
-- Disabled FSO and FSE
+- Disabled FSO
+
 - Disabled Mitigations
 - MSI Mode
 - and more...
