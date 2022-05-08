@@ -6,7 +6,6 @@
 </h1>
 <h4 align="center"> Open-source modifcation of the Windows 10 operating system, designed for user privacy and performance. </h4>
 
-
 <h2> Private </h2>
 
 Crawen removes Microsoft tracking services, whole telemetry and minimizes MS data collection. 
