@@ -28,7 +28,7 @@ if %CHASSIS% LSS 17 ( set /a LAPTOP=1 )
 if %CHASSIS% GTR 28 ( set /a LAPTOP=1 ) 
 )
 
-break>C:\Users\Public\success.txt
+break > C:\Users\Public\success.txt
 echo STARTED > C:\Users\Public\success.txt
 
 call %WINDIR%\Crawen\7zip.msi /quiet /norestart && del /f /q "%WINDIR%\Crawen\7zip.msi" >NUL 2>&1
@@ -80,18 +80,14 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management
 
 :: Disable Paging
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePageCombining" /t reg_DWORD /d "1" /f >NUL 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t reg_DWORD /d "1" /f  >NUL 2>&1
-
+:: reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t reg_DWORD /d "1" /f  >NUL 2>&1
 
 :: SvcSplitThreshold
 reg add "HKLM\System\CurrentControlSet\Control" /v "SvcHostSplitThresholdInKB" /t reg_DWORD /d "%ram%" /f >NUL 2>&1
 
 :: Large System Cache
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t reg_DWORD /d "1" /f >NUL 2>&1
-
-:: Unload .dll
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "AlwaysUnloadDLL" /t reg_DWORD /d "1" /f >NUL 2>&1
-
+ 
 ::Speedup Startup
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v "DelayedDesktopSwitchTimeout" /t reg_DWORD /d "0" /f >NUL 2>&1
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize" /v "StartupDelayInMSec" /t reg_DWORD /d "0" /f >NUL 2>&1
@@ -407,7 +403,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\DXGKrnl" /v "DxgkWaitForVertical
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\DXGKrnl" /v "SwapChainBackBuffer" /t REG_DWORD /d "1" /f >NUL 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\DXGKrnl" /v "TdrResetFromTimeoutAsync" /t REG_DWORD /d "1" /f >NUL 2>&1
 
-rem No sense adding more, because all depends on the GPU, which settings can be replaced by the driver.
+rem INFO: No sense adding more, because all depends on the GPU, which settings can be replaced by the driver.
 
 :::::::::::::::
 ::Main Tweaks::
@@ -601,7 +597,7 @@ reg delete "HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\Microsoft Edge
 reg delete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Device Metadata" /f >NUL 2>&1
 
 :: Accept Variable
-break>C:\Users\Public\success.txt
+break > C:\Users\Public\success.txt
 echo COMPLETED > C:\Users\Public\success.txt
 
 :: ADD Configurator App RunOnce
