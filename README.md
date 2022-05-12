@@ -17,18 +17,18 @@ While installing our OS you will get preinstalled:
 
 - Custom Powerplan
 - Optimized Services and Drivers
-- CPU, GPU, SDD Optimizations
+- Disabled Power Saving
 - Disabled FSO
-
 - Disabled Mitigations
+- Optimized SSD and CPU
 - MSI Mode
 - and more...
 
 <h2> Discord </h2>
 
-Go ahead and join our [discord](https://discord.gg/crawenos) to get support or talk with us!
+Go ahead and join our [discord](https://discord.gg/crawenos) to get support or talk with a great community!
 
 <h2> Disclaimer </h2>
 
-None of these images are pre-activated, you **must** use a genuine key.
+NONE of these images are pre-activated, you **must** use a genuine key.
 You need to accept [Microsoft's Terms.](https://www.microsoft.com/en-us/Useterms/Retail/Windows/10/UseTerms_Retail_Windows_10_English.htm)
