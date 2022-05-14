@@ -82,7 +82,7 @@ reg add "HKLM\System\CurrentControlSet\Control" /v "SvcHostSplitThresholdInKB" /
 :: Large System Cache
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t reg_DWORD /d "1" /f >NUL 2>&1
  
-::Speedup Startup
+:: Speedup Startup
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v "DelayedDesktopSwitchTimeout" /t reg_DWORD /d "0" /f >NUL 2>&1
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize" /v "StartupDelayInMSec" /t reg_DWORD /d "0" /f >NUL 2>&1
 
@@ -92,7 +92,7 @@ reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Serialize" /v "
 :::::::::::::::
 
 :: Disable DmaRemapping
-for /f %%i in ('reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services" /s /f DmaRemappingCompatible ^| find /i "Services\" ') do (
+for /f %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services" /s /f DmaRemappingCompatible ^| find /i "Services\" ') do (
 	reg add "%%i" /v "DmaRemappingCompatible" /t reg_DWORD /d "0" /f >NUL 2>&1
 )
 
@@ -104,27 +104,27 @@ reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution 
 
 :: Set System Processes Priority below normal
 for %%i in (lsass.exe sppsvc.exe SearchIndexer.exe fontdrvhost.exe sihost.exe ctfmon.exe) do (
-  reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%%i\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "5" /f
+  reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%%i\PerfOptions" /v "CpuPriorityClass" /t reg_DWORD /d "5" /f
 )
 :: Set background apps priority below normal
 for %%i in (OriginWebHelperService.exe ShareX.exe EpicWebHelper.exe SocialClubHelper.exe steamwebhelper.exe) do (
-  reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%%i\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "5" /f
+  reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%%i\PerfOptions" /v "CpuPriorityClass" /t reg_DWORD /d "5" /f
 )
 
 :: Disable FTH
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\FTH" /v "Enabled" /t reg_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\FTH" /v "Enabled" /t reg_DWORD /d "0" /f >NUL 2>&1
 
 :: Disable Chain Validation
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\kernel" /v "DisableExceptionChainValidation" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "DisableExceptionChainValidation" /t reg_DWORD /d "1" /f >NUL 2>&1
 
 :: Correct Mitigation Values
 powershell -NoProfile -Command Set-ProcessMitigation -System -Disable CFG >NUL 2>&1
-for /f "tokens=3 skip=2" %%a in ('reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions"') do set mitigation_mask=%%a
+for /f "tokens=3 skip=2" %%a in ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions"') do set mitigation_mask=%%a
 for /L %%a in (0,1,9) do (
     set mitigation_mask=!mitigation_mask:%%a=2!
 )
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions" /t reg_BINARY /d "%mitigation_mask%" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t reg_BINARY /d "%mitigation_mask%" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions" /t reg_BINARY /d "%mitigation_mask%" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t reg_BINARY /d "%mitigation_mask%" /f >NUL 2>&1
 
 :: not found in ntoskrnl
 :: reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "MoveImages" /t reg_DWORD /d "0" /f >NUL 2>&1
@@ -139,19 +139,19 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management
 :::::::::::::::
 
 :: DWM
-reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\DWM" /v "EnableAeroPeek" /t reg_DWORD /d "0" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\DWM" /v "DisallowAnimations" /t reg_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\DWM" /v "Composition" /t reg_DWORD /d "0" /f >NUL 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\Windows\DWM" /v "EnableAeroPeek" /t reg_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\DWM" /v "DisallowAnimations" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\Windows\DWM" /v "Composition" /t reg_DWORD /d "0" /f >NUL 2>&1
 
 :: Security Tweaks 
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters" /v "RestrictNULlSessAccess" /t reg_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\LanManServer\Parameters" /v "DisableCompression" /t reg_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa" /v "RestrictAnonymous" /t reg_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa" /v "RestrictAnonymousSAM" /t reg_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\NetBT\Parameters" /v "NodeType" /t reg_DWORD /d "2" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Services\LanManServer\Parameters" /v "RestrictNullSessAccess" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Services\LanManServer\Parameters" /v "DisableCompression" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Lsa" /v "RestrictAnonymous" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Lsa" /v "RestrictAnonymousSAM" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Services\NetBT\Parameters" /v "NodeType" /t reg_DWORD /d "2" /f >NUL 2>&1
 
 :: Restrict Windows communication
-reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\InternetManagement" /v "RestrictCommunication" /t REG_DWORD /d "1" /f
+reg add "HKLM\Software\Policies\Microsoft\InternetManagement" /v "RestrictCommunication" /t reg_DWORD /d "1" /f
 
 :: Win32PrioritySeparation 26 hex/38 dec
 reg add "HKLM\System\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t reg_DWORD /d "38" /f >NUL 2>&1
@@ -163,23 +163,23 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "HibernateEnabledDefaul
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "HibernateEnabled" /t reg_DWORD /d "0" /f >NUL 2>&1
 
 :: MMCSS
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t reg_DWORD /d "10" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t reg_DWORD /d "10" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NoLazyMode" /t reg_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "LazyModeTimeout" /t reg_DWORD /d "10000" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Latency Sensitive" /t reg_SZ /d "True" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "NoLazyMode" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t reg_DWORD /d "10" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t reg_DWORD /d "10" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NoLazyMode" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "LazyModeTimeout" /t reg_DWORD /d "10000" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Latency Sensitive" /t reg_SZ /d "True" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "NoLazyMode" /t reg_DWORD /d "1" /f >NUL 2>&1
 
-:: Hung Apps, Wait to Kill, QoL
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v "AutoEndTasks" /t REG_SZ /d "1" /f >NUL 2>&1
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v "HungAppTimeout" /t REG_SZ /d "1000" /f >NUL 2>&1
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "8" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control" /v "WaitToKillServiceTimeout" /t REG_SZ /d "2000" /f >NUL 2>&1
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v "UserPreferencesMask" /t REG_BINARY /d "9A12038010000000" /f >NUL 2>&1
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v "JPEGImportQuality" /t REG_DWORD /d "100" /f >NUL 2>&1
+:: Hung Apps, Delay
+reg add "HKCU\Control Panel\Desktop" /v "AutoEndTasks" /t reg_SZ /d "1" /f >NUL 2>&1
+reg add "HKCU\Control Panel\Desktop" /v "HungAppTimeout" /t reg_SZ /d "1000" /f >NUL 2>&1
+reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t reg_SZ /d "8" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control" /v "WaitToKillServiceTimeout" /t reg_SZ /d "2000" /f >NUL 2>&1
+reg add "HKCU\Control Panel\Desktop" /v "UserPreferencesMask" /t reg_BINARY /d "9A12038010000000" /f >NUL 2>&1
+reg add "HKCU\Control Panel\Desktop" /v "JPEGImportQuality" /t reg_DWORD /d "100" /f >NUL 2>&1
 
 :: Enable Hardware Accelerated Scheduling (HAGS)
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t reg_DWORD /d "2" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t reg_DWORD /d "2" /f >NUL 2>&1
 
 :: Mouse Optimizations
 reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t reg_SZ /d "10" /f >NUL 2>&1
@@ -190,44 +190,44 @@ reg add "HKCU\Control Panel\Mouse" /v "SmoothMouseXCurve" /t reg_BINARY /d 00000
 reg add "HKCU\Control Panel\Mouse" /v "SmoothMouseYCurve" /t reg_BINARY /d 0000000000000000000038000000000000007000000000000000A800000000000000E00000000000 /f >NUL 2>&1
 
 :: Keyboard Optimizations
-reg add "HKEY_CURRENT_USER\Control Panel\Accessibility\StickyKeys" /v "Flags" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKEY_CURRENT_USER\Control Panel\Accessibility\Keyboard Response" /v "Flags" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKEY_CURRENT_USER\Control Panel\Accessibility\ToggleKeys" /v "Flags" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKCU\Control Panel\Accessibility\StickyKeys" /v "Flags" /t reg_DWORD /d "0" /f >NUL 2>&1
+reg add "HKCU\Control Panel\Accessibility\Keyboard Response" /v "Flags" /t reg_DWORD /d "0" /f >NUL 2>&1
+reg add "HKCU\Control Panel\Accessibility\ToggleKeys" /v "Flags" /t reg_DWORD /d "0" /f >NUL 2>&1
 
 :: Data Queue Sizes
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d "50" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d "50" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t reg_DWORD /d "50" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t reg_DWORD /d "50" /f >NUL 2>&1
 
 :: Disable Transparency
-reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t reg_DWORD /d "0" /f >NUL 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t reg_DWORD /d "0" /f >NUL 2>&1
 
 :: Disable Maintenance
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t reg_DWORD /d "1" /f >NUL 2>&1
 
 :: Do not reduce sounds while calling
-reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPreference" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPreference" /t reg_DWORD /d "3" /f >NUL 2>&1
  
 :: Handwriting Telemtry
-reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\TabletPC" /v "PreventHandwritingDataSharing" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\HandwritingErrorReports" /v "PreventHandwritingErrorReports" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\Software\Policies\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\Software\Policies\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\TabletPC" /v "PreventHandwritingDataSharing" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\HandwritingErrorReports" /v "PreventHandwritingErrorReports" /t reg_DWORD /d "1" /f >NUL 2>&1
 
 :: Windows Error Reporting
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\Windows Error Reporting\Consent" /v "DefaultOverrideBehavior" /t REG_DWORD /d "1" /f >NUL 2>&1 
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\Windows Error Reporting\Consent" /v "DefaultConsent" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\Consent" /v "DefaultOverrideBehavior" /t reg_DWORD /d "1" /f >NUL 2>&1 
+reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\Consent" /v "DefaultConsent" /t reg_DWORD /d "0" /f >NUL 2>&1
 
 :: Telemetry
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "MaxTelemetryAllowed" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "AllowDeviceNameInTelemetry" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\DataCollection" /v "LimitEnhancedDiagnosticDataWindowsAnalytics" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "MaxTelemetryAllowed" /t reg_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "AllowDeviceNameInTelemetry" /t reg_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "DoNotShowFeedbackNotifications" /t reg_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /v "LimitEnhancedDiagnosticDataWindowsAnalytics" /t reg_DWORD /d "0" /f >NUL 2>&1
 
 :: Disable Sleep Study
-reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Power" /v "SleepStudyDisabled" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Power" /v "SleepStudyDisabled" /t reg_DWORD /d "1" /f >NUL 2>&1
 
 :: KMS Data sending
-reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "NoGenTicket" /t REG_DWORD /d "1" /f >NUL 2>&1 
+reg add "HKLM\Software\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "NoGenTicket" /t reg_DWORD /d "1" /f >NUL 2>&1 
 
 :: Delete Defaultuser0 used during OOBE
 net user defaultuser0 /delete >NUL 2>&1 
@@ -300,76 +300,76 @@ powershell -NoProfile -Command "Disable-NetAdapterBinding -Name "*" -ComponentID
 :: NIC Settings - imbiriy
 for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" /v "*SpeedDuplex" /s ^| findstr  "HKEY"') do (
     for /f %%i in ('reg query "%%a" /v "*ReceiveBuffers" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "*ReceiveBuffers" /t REG_SZ /d "1024" /f >NUL 2>&1
+        reg add "%%i" /v "*ReceiveBuffers" /t reg_SZ /d "1024" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "*TransmitBuffers" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "*TransmitBuffers" /t REG_SZ /d "1024" /f >NUL 2>&1
+        reg add "%%i" /v "*TransmitBuffers" /t reg_SZ /d "1024" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "*DeviceSleepOnDisconnect" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "*DeviceSleepOnDisconnect" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "*DeviceSleepOnDisconnect" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "*EEE" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "*EEE" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "*EEE" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "*ModernStandbyWoLMagicPacket" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "*ModernStandbyWoLMagicPacket" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "*ModernStandbyWoLMagicPacket" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "*SelectiveSuspend" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "*SelectiveSuspend" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "*SelectiveSuspend" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "*WakeOnMagicPacket" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "*WakeOnMagicPacket" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "*WakeOnMagicPacket" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "*WakeOnPattern" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "*WakeOnPattern" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "*WakeOnPattern" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "AutoPowerSaveModeEnabled" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "AutoPowerSaveModeEnabled" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "AutoPowerSaveModeEnabled" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "EEELinkAdvertisement" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "EEELinkAdvertisement" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "EEELinkAdvertisement" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "EeePhyEnable" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "EeePhyEnable" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "EeePhyEnable" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "EnableGreenEthernet" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "EnableGreenEthernet" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "EnableGreenEthernet" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "EnableModernStandby" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "EnableModernStandby" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "EnableModernStandby" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "GigaLite" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "GigaLite" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "GigaLite" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "PowerDownPll" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "PowerDownPll" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "PowerDownPll" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "PowerSavingMode" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "PowerSavingMode" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "PowerSavingMode" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "ReduceSpeedOnPowerDown" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "ReduceSpeedOnPowerDown" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "ReduceSpeedOnPowerDown" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "S5WakeOnLan" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "S5WakeOnLan" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "S5WakeOnLan" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "SavePowerNowEnabled" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "SavePowerNowEnabled" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "SavePowerNowEnabled" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "ULPMode" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "ULPMode" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "ULPMode" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "WakeOnLink" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "WakeOnLink" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "WakeOnLink" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "WakeOnSlot" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "WakeOnSlot" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "WakeOnSlot" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "WakeUpModeCap" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "WakeUpModeCap" /t REG_SZ /d "0" /f >NUL 2>&1
+        reg add "%%i" /v "WakeUpModeCap" /t reg_SZ /d "0" /f >NUL 2>&1
     )
     for /f %%i in ('reg query "%%a" /v "WakeUpModeCap" ^| findstr "HKEY"') do (
-        Reg.exe add "%%i" /v "PnPCapabilities" /t REG_SZ /d "24" /f >NUL 2>&1
+        reg add "%%i" /v "PnPCapabilities" /t reg_SZ /d "24" /f >NUL 2>&1
     )
 ) >NUL 2>&1
 
@@ -378,39 +378,39 @@ for /f %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972
 :::::::::::::::
 
 :: Enable MSI Mode on USB Controllers
-for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg delete "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t reg_DWORD /d "1" /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
 
 :: Enable MSI Mode on GPU
-for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t reg_DWORD /d "1" /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
 
 :: Enable MSI Mode on Network Adapters
-for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t reg_DWORD /d "1" /f >NUL 2>&1
 wmic computersystem get manufacturer /format:value| findstr /i /C:VMWare&&goto vmYES
-for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
 goto vmNO
 
 :vmYES
 :: Set to Normal Priority
-for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /t REG_DWORD /d "2"  /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /t reg_DWORD /d "2"  /f >NUL 2>&1
 
 :vmNO
 :: Enable MSI Mode on Sata controllers
-for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t reg_DWORD /d "1" /f >NUL 2>&1
+for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
 
 
 :: Power Saving
-for /f "tokens=*" %%i in ('reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t reg_DWORD /d "0" /f >NUL 2>&1
+for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t reg_DWORD /d "0" /f >NUL 2>&1
 for /f "tokens=*" %%i in ('wmic PATH Win32_PnPEntity GET DeviceID ^| findstr "USB\VID_"') do (
- reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnhancedPowerManagementEnabled" /t reg_DWORD /d "0" /f >NUL 2>&1
- reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "AllowIdleIrpInD3" /t reg_DWORD /d "0" /f >NUL 2>&1
- reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnableSelectiveSuspend" /t reg_DWORD /d "0" /f >NUL 2>&1
- reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "DeviceSelectiveSuspended" /t reg_DWORD /d "0" /f >NUL 2>&1
- reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "SelectiveSuspendEnabled" /t reg_DWORD /d "0" /f >NUL 2>&1
- reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "SelectiveSuspendOn" /t reg_DWORD /d "0" /f >NUL 2>&1 >NUL 2>&1
- reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "D3ColdSupported" /t reg_DWORD /d "0" /f >NUL 2>&1
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnhancedPowerManagementEnabled" /t reg_DWORD /d "0" /f >NUL 2>&1
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "AllowIdleIrpInD3" /t reg_DWORD /d "0" /f >NUL 2>&1
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnableSelectiveSuspend" /t reg_DWORD /d "0" /f >NUL 2>&1
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "DeviceSelectiveSuspended" /t reg_DWORD /d "0" /f >NUL 2>&1
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "SelectiveSuspendEnabled" /t reg_DWORD /d "0" /f >NUL 2>&1
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "SelectiveSuspendOn" /t reg_DWORD /d "0" /f >NUL 2>&1 >NUL 2>&1
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "D3ColdSupported" /t reg_DWORD /d "0" /f >NUL 2>&1
 )
 
 :: Import and set the powerplan
@@ -422,21 +422,21 @@ powercfg -delete e9a42b02-d5df-448d-aa00-03f14749eb61 >NUL 2>&1
 
 :: Power
 if %LAPTOP%==0 (
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Storage" /v "StorageD3InModernStandby" /t REG_DWORD /d "0" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak" /v "DisplayPowerSaving" /t REG_DWORD /d "0" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Services\pci\Parameters" /v "ASPMOptOut" /t REG_DWORD /d "1" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Services\stornvme\Parameters\Device" /v "IdlePowerMode" /t REG_DWORD /d "0" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Storage" /v "StorageD3InModernStandby" /t reg_DWORD /d "0" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak" /v "DisplayPowerSaving" /t reg_DWORD /d "0" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Services\pci\Parameters" /v "ASPMOptOut" /t reg_DWORD /d "1" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Services\stornvme\Parameters\Device" /v "IdlePowerMode" /t reg_DWORD /d "0" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t reg_DWORD /d "1" /f
 	for %%a in (AllowIdleIrpInD3 D3ColdSupported DeviceSelectiveSuspended EnableIdlePowerManagement	EnableSelectiveSuspend
 		EnhancedPowerManagementEnabled IdleInWorkingState SelectiveSuspendEnabled SelectiveSuspendOn WaitWakeEnabled 
 		WakeEnabled WdfDirectedPowerTransitionEnable) do (
 		for /f "delims=" %%b in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%a" ^| findstr "HKEY"') do (
-			reg add "%%b" /v "%%a" /t REG_DWORD /d "0" /f >NUL 2>&1
+			reg add "%%b" /v "%%a" /t reg_DWORD /d "0" /f >NUL 2>&1
 		)
 	)
 	for %%a in (DisableIdlePowerManagement) do (
 		for /f "delims=" %%b in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%a" ^| findstr "HKEY"') do (
-			reg add "%%b" /v "%%a" /t REG_DWORD /d "1" /f >NUL 2>&1
+			reg add "%%b" /v "%%a" /t reg_DWORD /d "1" /f >NUL 2>&1
 		)
 	)
 ) else (
@@ -444,26 +444,26 @@ if %LAPTOP%==0 (
 )
 
 :: MEMORY
-reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "SvcHostSplitThresholdInKB" /t REG_DWORD /d "%ram%" /f >NUL 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "SvcHostSplitThresholdInKB" /t reg_DWORD /d "%ram%" /f >NUL 2>&1
 if %ram% LSS 8000000 (
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NTFSDisable8dot3NameCreation" /t reg_DWORD /d "1" /f >NUL 2>&1
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NTFSDisableLastAccessUpdate" /t reg_DWORD /d "1" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMemoryUsage" /t REG_DWORD /d "1" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMftZoneReservation" /t REG_DWORD /d "1" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d "33554432" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMemoryUsage" /t reg_DWORD /d "1" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMftZoneReservation" /t reg_DWORD /d "1" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t reg_DWORD /d "33554432" /f >NUL 2>&1
 ) else if %ram% LSS 16000000 (
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NTFSDisable8dot3NameCreation" /t reg_DWORD /d "1" /f >NUL 2>&1
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NTFSDisableLastAccessUpdate" /t reg_DWORD /d "1" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMemoryUsage" /t REG_DWORD /d "1" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMftZoneReservation" /t REG_DWORD /d "2" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d "67108864" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMemoryUsage" /t reg_DWORD /d "1" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMftZoneReservation" /t reg_DWORD /d "2" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t reg_DWORD /d "67108864" /f >NUL 2>&1
 ) else (
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NTFSDisable8dot3NameCreation" /t reg_DWORD /d "1" /f >NUL 2>&1
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NTFSDisableLastAccessUpdate" /t reg_DWORD /d "1" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMemoryUsage" /t REG_DWORD /d "2" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMftZoneReservation" /t REG_DWORD /d "2" /f >NUL 2>&1
-	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d "134217728" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t reg_DWORD /d "1" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMemoryUsage" /t reg_DWORD /d "2" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsMftZoneReservation" /t reg_DWORD /d "2" /f >NUL 2>&1
+	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t reg_DWORD /d "134217728" /f >NUL 2>&1
 )
 
 :: BCDEDIT
@@ -471,7 +471,6 @@ bcdedit /deletevalue useplatformclock > NUL 2>&1
 bcdedit /set disabledynamictick yes > NUL 2>&1
 bcdedit /set useplatformtick yes > NUL 2>&1
 bcdedit /timeout 10 > NUL 2>&1
-bcdedit /set bootux disabled > NUL 2>&1
 bcdedit /set bootmenupolicy standard > NUL 2>&1
 bcdedit /set hypervisorlaunchtype off > NUL 2>&1
 bcdedit /set tpmbootentropy ForceDisable > NUL 2>&1
@@ -529,22 +528,22 @@ NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierinstall" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\BrokerInfrastructure\BgTaskRegistrationMaintenanceTask" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\BrokerInfrastructure\BgTaskregistrationMaintenanceTask" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\AikCertEnrollTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\KeyPreGenTask" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\KeyPregenTask" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Clip\License Validation" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Defrag\ScheduledDefrag" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\HandleCommand" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\HandleWnsCommand" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\IntegrityCheck" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\LocateCommandUserSession" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceAccountChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceLocationRightsChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDevicePeriodic24" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDevicePolicyChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceProtectionStateChanged" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceSettingChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterUserDevice" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDeviceAccountChange" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDeviceLocationRightsChange" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDevicePeriodic24" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDevicePolicyChange" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDeviceProtectionStateChanged" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDeviceSettingChange" >nul 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerUserDevice" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\Uninstallation" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Management\Provisioning\Cellular" >nul 2>&1
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" >nul 2>&1
@@ -588,25 +587,25 @@ NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Window
 sc delete edgeupdate >NUL 2>&1
 sc delete edgeupdatem >NUL 2>&1
 
-reg delete "HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge Update" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\Classes\MSEdgeHTM" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\Application\edgeupdate" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EventLog\Application\edgeupdatem" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\WOW6432Node\Clients\StartMenuInternet\Microsoft Edge" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\EdgeUpdate" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\Edge" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\Clients\StartMenuInternet\Microsoft Edge" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Device Metadata" /f >NUL 2>&1
+reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge" /f >NUL 2>&1
+reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge Update" /f >NUL 2>&1
+reg delete "HKLM\Software\Classes\MSEdgeHTM" /f >NUL 2>&1
+reg delete "HKLM\System\CurrentControlSet\Services\EventLog\Application\edgeupdate" /f >NUL 2>&1
+reg delete "HKLM\System\CurrentControlSet\Services\EventLog\Application\edgeupdatem" /f >NUL 2>&1
+reg delete "HKLM\Software\WOW6432Node\Clients\StartMenuInternet\Microsoft Edge" /f >NUL 2>&1
+reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe" /f >NUL 2>&1
+reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe" /f >NUL 2>&1
+reg delete "HKLM\Software\WOW6432Node\Microsoft\EdgeUpdate" /f >NUL 2>&1
+reg delete "HKLM\Software\WOW6432Node\Microsoft\Edge" /f >NUL 2>&1
+reg delete "HKLM\Software\Clients\StartMenuInternet\Microsoft Edge" /f >NUL 2>&1
+reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Device Metadata" /f >NUL 2>&1
 
 :: Accept Variable
 break>C:\Users\Public\success.txt
 echo COMPLETED > C:\Users\Public\success.txt
 
 :: ADD Configurator App RunOnce
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v "Configurator" /t REG_SZ /d "%WINDIR%\Crawen\Configurator\Configurator.exe" /f >NUL 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v "Configurator" /t reg_SZ /d "%WINDIR%\Crawen\Configurator\Configurator.exe" /f >NUL 2>&1
 
 :: Misc Tweaks
 lodctr /r >NUL 2>&1
