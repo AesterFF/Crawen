@@ -1,8 +1,7 @@
-:: CrawenOS PostInstall Script
-:: Version 0.2
+:: CrawenOS Post Install Script
+:: Version 0.21
 
 :: CREDITS:
-:: 420bud420
 :: Amit
 :: Artanis
 :: CatGamerOP
@@ -13,7 +12,7 @@
 :: Zusier
 
 @echo off
->NUL 2>&1 "%WinDir%\System32\cacls.exe" "%WinDir%\System32\config\system"
+>nul 2>nul "%WinDir%\System32\cacls.exe" "%WinDir%\System32\config\system"
 
 SETLOCAL EnableDelayedExpansion
 
@@ -35,30 +34,37 @@ echo STARTED > C:\Users\Public\success.txt
 call %WINDIR%\Crawen\7zip.msi /quiet /norestart && del /f /q "%WINDIR%\Crawen\7zip.msi" >NUL 2>&1
 NSudoL -ShowWindowMode:hide -Wait -U:T -P:E reg import "%WINDIR%\Crawen\7-Zip.reg" >NUL 2>&1 && del /f /q "%WINDIR%\Crawen\7-Zip.reg" >NUL 2>&1
 
-:::::::::::::::::::::::::
-::Memory Optimizations:::
-:::::::::::::::::::::::::
+
+::::::::::::::::::::::::
+::Memory Optimizations::
+::::::::::::::::::::::::
 
 :: Storage System - AMIT
-fsutil behavior set allowextchar 0 > NUL 2>&1
-fsutil behavior set Bugcheckoncorrupt 0 > NUL 2>&1
-fsutil behavior set disable8dot3 1 > NUL 2>&1
-fsutil behavior set disablecompression 1 > NUL 2>&1
+fsutil behavior set allowextchar 0 >NUL 2>&1
+fsutil behavior set Bugcheckoncorrupt 0 >NUL 2>&1
+fsutil behavior set disable8dot3 1 >NUL 2>&1
+fsutil behavior set disablecompression 1 >NUL 2>&1
 fsutil behavior set disabledeletenotify 0 >NUL 2>&1
-fsutil behavior set disableencryption 1 > NUL 2>&1
-fsutil behavior set disablelastaccess 1 > NUL 2>&1
-fsutil behavior set disablespotcorruptionhandling 1 > NUL 2>&1
-fsutil behavior set encryptpagingfile 0 > NUL 2>&1
-fsutil behavior set quotanotify 86400 > NUL 2>&1
-fsutil behavior set symlinkevaluation L2L:1 > NUL 2>&1
+fsutil behavior set disableencryption 1 >NUL 2>&1
+fsutil behavior set disablelastaccess 1 >NUL 2>&1
+fsutil behavior set disablespotcorruptionhandling 1 >NUL 2>&1
+fsutil behavior set encryptpagingfile 0 >NUL 2>&1
+fsutil behavior set quotanotify 86400 >NUL 2>&1
+fsutil behavior set symlinkevaluation L2L:1 >NUL 2>&1
 
 :: Prefetch & Superfetch
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /v "EnablePrefetcher" /t REG_DWORD /d "0" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /v "EnableSuperfetch" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnableSuperfetch" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnablePrefetcher" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnableBootTrace" /t REG_DWORD /d "0" /f >NUL 2>&1
 
+:: Cancel the Disk Check when Windows starts
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /v "BootExecute" /t REG_MULTI_SZ /d "\0" /f >NUL 2>&1
+
+::Disable boot files defragmentation at startup
+reg add "HKLM\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" /v "Enable" /t REG_SZ /d "N" /f >NUL 2>&1
+
+:: Disable updating Group Policy at startup
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "SynchronousMachineGroupPolicy" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "SynchronousUserGroupPolicy" /t REG_DWORD /d "0" /f >NUL 2>&1
 
 :: Memory Compression
 powershell -Command "Disable-MMAgent -mc"
@@ -108,11 +114,11 @@ reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "Disab
 powershell -NoProfile -Command Set-ProcessMitigation -System -Disable CFG >NUL 2>&1
 for /f "tokens=3 skip=2" %%i in ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions"') do set mitigation_mask=%%i
 for /l %%i in (0,1,9) do set mitigation_mask=!mitigation_mask:%%i=2!
-reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_BINARY /d "!mitigation_mask!" /f >nul 2>&1
-reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions" /t REG_BINARY /d "!mitigation_mask!" /f >nul 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_BINARY /d "!mitigation_mask!" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions" /t REG_BINARY /d "!mitigation_mask!" /f >NUL 2>&1
 
 :::::::::::::::
-::Mitigations::
+::Windows Opt::
 :::::::::::::::
 
 :: DWM
@@ -121,6 +127,7 @@ reg add "HKLM\Software\Policies\Microsoft\Windows\DWM" /v "DisallowAnimations" /
 reg add "HKCU\SOFTWARE\Microsoft\Windows\DWM" /v "Composition" /t REG_DWORD /d "0" /f >NUL 2>&1
 
 :: Security Tweaks 
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\WindowsUpdate" /v "SusClientId" /t REG_SZ /d "00000000-0000-0000-0000-000000000000" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\LanManServer\Parameters" /v "RestrictNullSessAccess" /t REG_DWORD /d "1" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\LanManServer\Parameters" /v "DisableCompression" /t REG_DWORD /d "1" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Lsa" /v "RestrictAnonymous" /t REG_DWORD /d "1" /f >NUL 2>&1
@@ -158,9 +165,8 @@ reg add "HKCU\Control Panel\Desktop" /v "JPEGImportQuality" /t REG_DWORD /d "100
 :: Enable Hardware Accelerated Scheduling (HAGS)
 reg add "HKLM\System\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d "2" /f >NUL 2>&1
 
-:: Mouse Optimizations
-reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d "10" /f >NUL 2>&1
-reg add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f >NUL 2>&1
+:: Force contiguous memory allocation in the DirectX Graphics kernel
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "DpiMapIommuContiguous" /t REG_DWORD /d "1" /f >NUL 2>&1
 
 :: Better Mouse Curve
 reg add "HKCU\Control Panel\Mouse" /v "SmoothMouseXCurve" /t REG_BINARY /d 0000000000000000C0CC0C0000000000809919000000000040662600000000000033330000000000 /f >NUL 2>&1
@@ -176,10 +182,28 @@ reg add "HKLM\System\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDa
 reg add "HKLM\System\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d "50" /f >NUL 2>&1
 
 :: Explorer
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarAnimations" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewShadow" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "DisallowShaking" /t REG_DWORD /d "1" /f >NUL 2>&1
 reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "NoRemoteDestinations" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "AltTabSettings" /t REG_DWORD /d "1" /f >NUL 2>&1
+
+:: Application Compatability
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\AppCompat" /v "AllowTelemetry" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\AppCompat" /v "DisableUAR" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\AppCompat" /v "DisableEngine" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\AppCompat" /v "DisablePCA" /t REG_DWORD /d "1" /f >NUL 2>&1
+
+:: WMP Optimizations
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\WMDRM" /v "DisableOnline" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\WindowsMediaPlayer" /v "GroupPrivacyAcceptance" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MediaPlayer\Preferences" /v "AcceptedEULA" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MediaPlayer\Preferences" /v "FirstTime" /t REG_DWORD /d "1" /f >NUL 2>&1
+
+:: Restore and configure Photo Viewer
+for %%i in (tif tiff bmp dib gif jfif jpe jpeg jpg jxr png) do (
+reg add "HKLM\SOFTWARE\Microsoft\Windows Photo Viewer\Capabilities\FileAssociations" /v ".%%~i" /t REG_SZ /d "PhotoViewer.FileAssoc.Tiff" /f >NUL 2>&1
+) >NUL 2>&1
+
+:: Disable blocking downloads 
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Attachments" /v "SaveZoneInformation" /t REG_DWORD /d "1" /f >NUL 2>&1
 
 :: Disable Transparency
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d "0" /f >NUL 2>&1
@@ -191,22 +215,24 @@ reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics" /v "Enab
 
 :: Do not reduce sounds while calling
 reg add "HKCU\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPreference" /t REG_DWORD /d "3" /f >NUL 2>&1
- 
-:: Handwriting Telemtry
-reg add "HKLM\Software\Policies\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKLM\Software\Policies\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKLM\Software\Policies\Microsoft\Windows\TabletPC" /v "PreventHandwritingDataSharing" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKLM\Software\Policies\Microsoft\Windows\HandwritingErrorReports" /v "PreventHandwritingErrorReports" /t REG_DWORD /d "1" /f >NUL 2>&1
-
-:: Windows Error Reporting
-reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\Consent" /v "DefaultOverrideBehavior" /t REG_DWORD /d "1" /f >NUL 2>&1 
-reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\Consent" /v "DefaultConsent" /t REG_DWORD /d "0" /f >NUL 2>&1
 
 :: Telemetry
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "MaxTelemetryAllowed" /t REG_DWORD /d "0" /f >NUL 2>&1
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "AllowDeviceNameInTelemetry" /t REG_DWORD /d "0" /f >NUL 2>&1
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d "1" /f >NUL 2>&1
 reg add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /v "LimitEnhancedDiagnosticDataWindowsAnalytics" /t REG_DWORD /d "0" /f >NUL 2>&1
+
+:: Disable Data Collection
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "MaxTelemetryAllowed" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "AllowDeviceNameInTelemetry" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\DataCollection" /v "LimitEnhancedDiagnosticDataWindowsAnalytics" /t REG_DWORD /d "0" /f >NUL 2>&1
+
+:: Disable Remote assistance
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance" /v "fAllowFullControl" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAllowToGetHelp" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAllowFullControl" /t REG_DWORD /d "0" /f >NUL 2>&1
 
 :: Disable Sleep Study
 reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Power" /v "SleepStudyDisabled" /t REG_DWORD /d "1" /f >NUL 2>&1
@@ -232,45 +258,11 @@ for /f %%s in ('reg query "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Net
 	reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\%%s" /v "TcpDelAckTicks" /t REG_DWORD /d "0" /f >NUL 2>&1
 )
 
-:: Set max port to 65535
-reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxUserPort" /t REG_DWORD /d "00065534" /f >NUL 2>&1
-
-:: Reduce TIME_WAIT
-reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpTimedWaitDelay" /t REG_DWORD /d "00000030" /f >NUL 2>&1
-
-:: Disable the TCP autotuning diagnostic tool
-reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableWsd" /t REG_DWORD /d "00000000" /f >NUL 2>&1
-
-:: Enable TCP Extensions for High Performance
-reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "Tcp1323Opts" /t REG_DWORD /d "00000001" /f >NUL 2>&1 
-
-:: Detect congestion fail to receive acknowledgement for a packet within the estimated timeout
-reg add "HKLM\System\CurrentControlSet\Services\Tcpip\Parameters" /v "TCPCongestionControl" /t REG_DWORD /d "00000001" /f >NUL 2>&1
-
-:: Set the maximum number of concurrent connections (per server endpoint) allowed when making requests using an HttpClient object.
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v "MaxConnectionsPerServer" /t REG_DWORD /d "00000016" /f >NUL 2>&1
-
-:: Maximum number of HTTP 1.0 connections to a Web server
-reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v "MaxConnectionsPer1_0Server" /t REG_DWORD /d "00000016" /f >NUL 2>&1
-
-:: TCP Congestion Control/Avoidance Algorithm
-reg add "HKLM\System\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /v "0200" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000ff000000000000000000000000000000000000000000ff000000000000000000000000000000" /f >NUL 2>&1
-reg add "HKLM\System\CurrentControlSet\Control\Nsi\{eb004a03-9b1a-11d4-9123-0050047759bc}\0" /v "1700" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000ff000000000000000000000000000000000000000000ff000000000000000000000000000000" /f >NUL 2>&1
-
 :: QOS
 reg add "HKLM\Software\Policies\Microsoft\Windows\Psched" /v "TimerResolution" /t REG_DWORD /d "1" /f >NUL 2>&1
-reg add "HKLM\Software\Policies\Microsoft\Windows\Psched" /v "NonBestEffortLimit" /t REG_DWORD /d "00000000" /f >NUL 2>&1
-reg add "HKLM\Software\WOW6432Node\Policies\Microsoft\Windows\Psched" /v "NonBestEffortLimit" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\Psched" /v "NonBestEffortLimit" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Tcpip\QoS" /v "Do not use NLA" /t REG_DWORD /d "1" /f
 reg add "HKLM\Software\Policies\Microsoft\Windows NT\DNSClient" /v "EnableMulticast" /t REG_DWORD /d "0" /f >NUL 2>&1
-
-::Network Priorities
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "LocalPriority" /t REG_DWORD /d "4" /f >NUL 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "HostsPriority" /t REG_DWORD /d "5" /f >NUL 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "DnsPriority" /t REG_DWORD /d "6" /f >NUL 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\ServiceProvider" /v "NetbtPriority" /t REG_DWORD /d "7" /f >NUL 2>&1
-
-::Enable The Network Adapter Onboard Processor
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "DisableTaskOffload" /t REG_DWORD /d "0" /f >NUL 2>&1
 
 ::Netsh
 netsh int tcp set heuristics disabled
@@ -330,34 +322,28 @@ for /f %%a in ('reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\C
     )
 ) >NUL 2>&1
 
+
 :::::::::::::::
 ::Main Tweaks::
 :::::::::::::::
 
-:: Enable MSI Mode on USB Controllers
-for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
+:: ENABLE MSI MODE FOR GPU
+for /f %%a in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /L "VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
+)
 
-:: Enable MSI Mode on GPU
-for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
+:: ENABLE MSI MODE FOR USB
+for /f %%a in ('wmic path Win32_USBController get PNPDeviceID^| findstr /L "VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
+)
 
-:: Enable MSI Mode on Network Adapters
-for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-wmic computersystem get manufacturer /format:value| findstr /i /C:VMWare&&goto vmYES
-for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
-goto vmNO
+:: ENABLE MSI MODE FOR NETWORK ADAPTER
+for /f %%a in ('wmic path Win32_NetworkAdapter get PNPDeviceID ^| findstr /L "VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
+)
 
-:vmYES
-:: Set to Normal Priority
-for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /t REG_DWORD /d "2"  /f >NUL 2>&1
-
-:vmNO
-:: Enable MSI Mode on Sata controllers
-for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID^| findstr /L "PCI\VEN_"') do reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >NUL 2>&1
-
-:: Power Saving
+:: Power saving
+powershell -NoProfile -Command "$devices = Get-WmiObject Win32_PnPEntity; $powerMgmt = Get-WmiObject MSPower_DeviceEnable -Namespace root\wmi; foreach ($p in $powerMgmt){$IN = $p.InstanceName.ToUpper(); foreach ($h in $devices){$PNPDI = $h.PNPDeviceID; if ($IN -like \"*$PNPDI*\"){$p.enable = $False; $p.psbase.put()}}}" >NUL 2>&1
 for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t REG_DWORD /d "0" /f >NUL 2>&1
 for /f "tokens=*" %%i in ('wmic PATH Win32_PnPEntity GET DeviceID ^| findstr "USB\VID_"') do (
  reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnhancedPowerManagementEnabled" /t REG_DWORD /d "0" /f >NUL 2>&1
@@ -545,6 +531,7 @@ NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Window
 NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\WaaSMedic" >NUL 2>&1
 
 :: Services
+reg add "HKLM\System\CurrentControlSet\Services\AmdPPM" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\AppIDSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\AppVClient" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\AppXSvc" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
@@ -571,6 +558,7 @@ reg add "HKLM\System\CurrentControlSet\Services\FontCache3.0.0.0" /v "Start" /t 
 reg add "HKLM\System\CurrentControlSet\Services\icssvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\IKEEXT" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\InstallService" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Services\IntelPPM" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\iphlpsvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\IpxlatCfgSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\KtmRm" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
@@ -609,6 +597,10 @@ reg add "HKLM\System\CurrentControlSet\Services\wuauserv" /v "Start" /t REG_DWOR
 reg add "HKLM\System\CurrentControlSet\Services\Dhcp" /v "DependOnService" /t REG_MULTI_SZ /d "NSI\0Afd" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\Dnscache" /v "DependOnService" /t REG_MULTI_SZ /d "nsi" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\rdyboost" /v "DependOnService" /t REG_MULTI_SZ /d "" /f >NUL 2>&1
+
+:: Filters - fixes fvevol, srv2, rdyboost
+reg add "HKLM\System\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_SZ /d "" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "UpperFilters" /t REG_SZ /d "" /f >NUL 2>&1
 
 :: Drivers
 reg add "HKLM\System\CurrentControlSet\Services\3ware" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
@@ -657,30 +649,10 @@ reg add "HKLM\System\CurrentControlSet\Services\VSTXRAID" /v "Start" /t REG_DWOR
 reg add "HKLM\System\CurrentControlSet\Services\wcnfs" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\WindowsTrustedRTProxy" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 
-:: Filters - fixes fvevol, srv2, rdyboost
-reg add "HKLM\System\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_SZ /d "" /f >NUL 2>&1
-reg add "HKLM\System\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "UpperFilters" /t REG_SZ /d "" /f >NUL 2>&1
 
-::::::::::::
-::CLEANING::
-::::::::::::
-
-:: Cleanup after EDGE
-sc delete edgeupdate >NUL 2>&1
-sc delete edgeupdatem >NUL 2>&1
-
-reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge" /f >NUL 2>&1
-reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft Edge Update" /f >NUL 2>&1
-reg delete "HKLM\Software\Classes\MSEdgeHTM" /f >NUL 2>&1
-reg delete "HKLM\System\CurrentControlSet\Services\EventLog\Application\edgeupdate" /f >NUL 2>&1
-reg delete "HKLM\System\CurrentControlSet\Services\EventLog\Application\edgeupdatem" /f >NUL 2>&1
-reg delete "HKLM\Software\WOW6432Node\Clients\StartMenuInternet\Microsoft Edge" /f >NUL 2>&1
-reg delete "HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe" /f >NUL 2>&1
-reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe" /f >NUL 2>&1
-reg delete "HKLM\Software\WOW6432Node\Microsoft\EdgeUpdate" /f >NUL 2>&1
-reg delete "HKLM\Software\WOW6432Node\Microsoft\Edge" /f >NUL 2>&1
-reg delete "HKLM\Software\Clients\StartMenuInternet\Microsoft Edge" /f >NUL 2>&1
-reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Device Metadata" /f >NUL 2>&1
+:::::::::::::
+::FINISHING::
+:::::::::::::
 
 :: Accept Variable
 break>C:\Users\Public\success.txt
