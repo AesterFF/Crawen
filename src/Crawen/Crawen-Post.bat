@@ -31,9 +31,9 @@ if %CHASSIS% GTR 28 ( set /a LAPTOP=1 )
 break>C:\Users\Public\success.txt
 echo STARTED > C:\Users\Public\success.txt
 
+:: Install and optimize 7-Zip
 call %WINDIR%\Crawen\7zip.msi /quiet /norestart && del /f /q "%WINDIR%\Crawen\7zip.msi" >NUL 2>&1
-NSudoL -ShowWindowMode:hide -Wait -U:T -P:E reg import "%WINDIR%\Crawen\7zip.reg" >NUL 2>&1 && del /f /q "%WINDIR%\Crawen\7zip.reg" >NUL 2>&1
-NSudoL -ShowWindowMode:hide -Wait -U:T -P:E reg import "%WINDIR%\Crawen\Services.reg" >NUL 2>&1 && del /f /q "%WINDIR%\Crawen\Services.reg" >NUL 2>&1
+NSudoL -ShowWindowMode:hide -Wait -U:T -P:E reg import "%WINDIR%\Crawen\7-Zip.reg" >NUL 2>&1 && del /f /q "%WINDIR%\Crawen\7-Zip.reg" >NUL 2>&1
 
 :::::::::::::::::::::::::
 ::Storage Optimizations::
