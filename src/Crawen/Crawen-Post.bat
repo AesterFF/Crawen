@@ -119,15 +119,10 @@ reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "Disab
 
 :: Correct Mitigation Values
 powershell -NoProfile -Command Set-ProcessMitigation -System -Disable CFG >NUL 2>&1
-for /f "tokens=3 skip=2" %%a in ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions"') do set mitigation_mask=%%a
-for /L %%a in (0,1,9) do (
-    set mitigation_mask=!mitigation_mask:%%a=2!
-)
-reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions" /t REG_BINARY /d "%mitigation_mask%" /f >NUL 2>&1
-reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_BINARY /d "%mitigation_mask%" /f >NUL 2>&1
-
-:: not found in ntoskrnl
-:: reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "MoveImages" /t REG_DWORD /d "0" /f >NUL 2>&1
+for /f "tokens=3 skip=2" %%i in ('reg query "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions"') do set mitigation_mask=%%i
+for /l %%i in (0,1,9) do set mitigation_mask=!mitigation_mask:%%i=2!
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_BINARY /d "!mitigation_mask!" /f >nul 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions" /t REG_BINARY /d "!mitigation_mask!" /f >nul 2>&1
 
 :: Spectre & Meltdown
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v FeatureSettings /t REG_DWORD /d "0" /f >NUL 2>&1
@@ -183,9 +178,7 @@ reg add "HKLM\System\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /
 
 :: Mouse Optimizations
 reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d "10" /f >NUL 2>&1
-reg add "HKU\.DEFAULT\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f >NUL 2>&1
-reg add "HKU\.DEFAULT\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f >NUL 2>&1
-reg add "HKU\.DEFAULT\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f >NUL 2>&1
+reg add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f >NUL 2>&1
 reg add "HKCU\Control Panel\Mouse" /v "SmoothMouseXCurve" /t REG_BINARY /d 0000000000000000C0CC0C0000000000809919000000000040662600000000000033330000000000 /f >NUL 2>&1
 reg add "HKCU\Control Panel\Mouse" /v "SmoothMouseYCurve" /t REG_BINARY /d 0000000000000000000038000000000000007000000000000000A800000000000000E00000000000 /f >NUL 2>&1
 
@@ -198,11 +191,19 @@ reg add "HKCU\Control Panel\Accessibility\ToggleKeys" /v "Flags" /t REG_DWORD /d
 reg add "HKLM\System\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d "50" /f >NUL 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\kbdclass\Parameters" /v "KeyboardDataQueueSize" /t REG_DWORD /d "50" /f >NUL 2>&1
 
+:: Explorer
+reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarAnimations" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ListviewShadow" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Explorer" /v "NoRemoteDestinations" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "AltTabSettings" /t REG_DWORD /d "1" /f >NUL 2>&1
+
 :: Disable Transparency
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d "0" /f >NUL 2>&1
 
 :: Disable Maintenance
-reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance" /v "MaintenanceDisabled" /t REG_DWORD /d "1" /f >NUL 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\ScheduledDiagnostics" /v "EnabledExecution" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics" /v "EnabledExecution" /t REG_DWORD /d "0" /f >NUL 2>&1
 
 :: Do not reduce sounds while calling
 reg add "HKCU\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPreference" /t REG_DWORD /d "3" /f >NUL 2>&1
@@ -437,16 +438,14 @@ if %ram% LSS 8000000 (
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d "134217728" /f >NUL 2>&1
 )
 
-:: BCDEDIT
+:: Bcdedit optimizations
+bcdedit /timeout 10 > NUL 2>&1
 bcdedit /deletevalue useplatformclock > NUL 2>&1
 bcdedit /set disabledynamictick yes > NUL 2>&1
 bcdedit /set useplatformtick yes > NUL 2>&1
-bcdedit /timeout 10 > NUL 2>&1
-bcdedit /set bootmenupolicy standard > NUL 2>&1
-bcdedit /set hypervisorlaunchtype off > NUL 2>&1
-bcdedit /set tpmbootentropy ForceDisable > NUL 2>&1
-bcdedit /set quietboot yes > NUL 2>&1
-bcdedit /set {current} description Crawen
+bcdedit /set description Crawen
+bcdedit /set hypervisorlaunchtype off
+bcdedit /set bootmenupolicy Legacy
 
 :: Disable Devices through DevManView
 devmanview /disable "System Speaker" MemoryDiagnostic
@@ -476,79 +475,197 @@ devmanview /disable "WAN Miniport (PPTP)"
 devmanview /disable "WAN Miniport (SSTP)"
 
 :: Scheduled Tasks
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Active Directory Rights Management Services Client\AD RMS Rights Policy Template Management (Automated)" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Active Directory Rights Management Services Client\AD RMS Rights Policy Template Management (Manual)" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\AppID\EDP Policy Manager" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\AppID\PolicyConverter" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\AppID\VerifiedPublisherCertStoreCheck" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\PcaPatchDbTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\StartupAppTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierdaily" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Diagnosis\Scheduled" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 64 Critical" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 64" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 Critical" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticResolver" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdates" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdatesAsUser" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\InstallService\SmartRetry" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\Installation" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierinstall" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\BrokerInfrastructure\BgTaskregistrationMaintenanceTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\AikCertEnrollTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\KeyPregenTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Clip\License Validation" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Defrag\ScheduledDefrag" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\HandleCommand" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\HandleWnsCommand" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\IntegrityCheck" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\LocateCommandUserSession" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDeviceAccountChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDeviceLocationRightsChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDevicePeriodic24" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDevicePolicyChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDeviceProtectionStateChanged" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerDeviceSettingChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\registerUserDevice" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\Uninstallation" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Management\Provisioning\Cellular" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\RunFullMemoryDiagnostic" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\MUI\LPRemove" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Device Setup\Metadata Refresh" >nul 2>&
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTaskNetwork" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\StateRepository\MaintenanceTasks" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Subscription\EnableLicenseAcquisition" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Subscription\LicenseAcquisition" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Sysmain\ResPriStaticDbSync" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Sysmain\WsSwapAssessmentTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Time Synchronization\ForceSynchronizeTime" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Time Synchronization\SynchronizeTime" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Time Zone\SynchronizeTimeZone" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\USB\Usb-Notifications" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Windows Error Reporting\QueueReporting" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Windows Filtering Platform\BfeOnServiceStartTypeChange" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Windows Media Sharing\UpdateLibrary" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Wininet\CacheTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\XblGameSave\XblGameSaveTask" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\PLA\System" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\PLA" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\WindowsUpdate\Scheduled Start" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\WindowsUpdate" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\WaaSMedic" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\RetailDemo\CleanupOfflineContent" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\RetailDemo" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\SyncCenter" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\TaskScheduler" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\Windows Activation Technologies" >nul 2>&1
-NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 64 Critical" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 64" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 Critical" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Active Directory Rights Management Services Client\AD RMS Rights Policy Template Management (Automated)" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Active Directory Rights Management Services Client\AD RMS Rights Policy Template Management (Manual)" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\AppID\EDP Policy Manager" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\AppID\PolicyConverter" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\AppID\VerifiedPublisherCertStoreCheck" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\PcaPatchDbTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\StartupAppTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierdaily" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierinstall" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\BrokerInfrastructure\BgTaskRegistrationMaintenanceTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\AikCertEnrollTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\CertificateServicesClient\KeyPreGenTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Clip\License Validation" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Defrag\ScheduledDefrag" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\HandleCommand" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\HandleWnsCommand" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\IntegrityCheck" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\LocateCommandUserSession" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceAccountChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceLocationRightsChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDevicePeriodic24" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDevicePolicyChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceProtectionStateChanged" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterDeviceSettingChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DeviceDirectoryClient\RegisterUserDevice" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Diagnosis\Scheduled" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticResolver" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdates" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdatesAsUser" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\InstallService\SmartRetry" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\Installation" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\LanguageComponentsInstaller\Uninstallation" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Management\Provisioning\Cellular" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\RunFullMemoryDiagnostic" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\MUI\LPRemove" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTaskNetwork" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\StateRepository\MaintenanceTasks" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Subscription\EnableLicenseAcquisition" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Subscription\LicenseAcquisition" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Sysmain\ResPriStaticDbSync" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Sysmain\WsSwapAssessmentTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Time Synchronization\ForceSynchronizeTime" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Time Synchronization\SynchronizeTime" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Time Zone\SynchronizeTimeZone" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\USB\Usb-Notifications" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Windows Error Reporting\QueueReporting" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Windows Filtering Platform\BfeOnServiceStartTypeChange" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Windows Media Sharing\UpdateLibrary" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Wininet\CacheTask" >NUL 2>&1
+schtasks /change /disable /TN "\Microsoft\XblGameSave\XblGameSaveTask" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\PLA\System" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\PLA" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\RetailDemo\CleanupOfflineContent" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\RetailDemo" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\SyncCenter" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\TaskScheduler" >NUL 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\Windows Activation Technologies" >NUL 2>&1
 
+:: Use more privevileges to disable and delete tasks
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /change /disable /TN "\Microsoft\Windows\Device Setup\Metadata Refresh" >NUL 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan" >NUL 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator" >NUL 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\WindowsUpdate\Scheduled Start" >NUL 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\WindowsUpdate" >NUL 2>&1
+NSudoL -ShowWindowMode:hide -U:T -P:E schtasks /delete /f /tn "\Microsoft\Windows\WaaSMedic" >NUL 2>&1
+
+:: Services
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\AppIDSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\AppVClient" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\AppXSvc" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\BthAvctpSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cbdhsvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\CDPSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\CryptSvc" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\defragsvc" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\diagnosticshub.standardcollector.service" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\diagsvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\DispBrokerDesktopSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\DisplayEnhancementService" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\DoSvc" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\DPS" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\DsmSvc" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Eaphost" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\edgeupdate" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\edgeupdatem" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\EFS" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\fdPHost" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\FDResPub" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\FontCache" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\FontCache3.0.0.0" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\icssvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\IKEEXT" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\InstallService" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\iphlpsvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\IpxlatCfgSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\KtmRm" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\LanmanServer" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\LanmanWorkstation" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\lmhosts" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MSDTC" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\NetTcpPortSharing" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\PcaSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\PhoneSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\QWAVE" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\RasMan" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\ShellHWDetection" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SmsRouter" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Spooler" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\sppsvc" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SSDPSRV" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SstpSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SysMain" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Themes" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\UsoSvc" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\VaultSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\W32Time" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\WarpJITSvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\WdiServiceHost" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\WdiSystemHost" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Wecsvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\WEPHOSTSVC" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\WinHttpAutoProxySvc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\WPDBusEnum" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\WSearch" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\wuauserv" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+
+:: Dependencies
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Dhcp" /v "DependOnService" /t REG_MULTI_SZ /d "NSI\0Afd" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Dnscache" /v "DependOnService" /t REG_MULTI_SZ /d "nsi" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\rdyboost" /v "DependOnService" /t REG_MULTI_SZ /d "" /f >NUL 2>&1
+
+:: Drivers
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\3ware" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\ADP80XX" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\AmdK8" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\arcsas" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\AsyncMac" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Beep" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\bindflt" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\buttonconverter" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\CAD" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cdfs" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\CimFS" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\circlass" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\cnghwassist" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\CompositeBus" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Dfsc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\ErrDev" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\fdc" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\flpydisk" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\fvevol" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\GpuEnergyDrv" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\mrxsmb" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\mrxsmb20" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\NdisVirtualBus" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\nvraid" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\PEAUTH" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\QWAVEdrv" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\rdbss" /v "Start" /t REG_DWORD /d "3" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\rdyboost" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\KSecPkg" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\mrxsmb20" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\mrxsmb" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\srv2" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\sfloppy" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SiSRaid2" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SiSRaid4" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Tcpip6" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\tcpipreg" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Telemetry" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\udfs" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\umbus" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\VerifierExt" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\vsmraid" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\VSTXRAID" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\wcnfs" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\WindowsTrustedRTProxy" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
+
+:: Thanks Artanis
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "LowerFilters" /t REG_SZ /d "" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{71a27cdd-812a-11d0-bec7-08002be2092f}" /v "UpperFilters" /t REG_SZ /d "" /f >NUL 2>&1
 
 ::::::::::::
 ::CLEANING::
