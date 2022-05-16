@@ -39,24 +39,25 @@ NSudoL -ShowWindowMode:hide -Wait -U:T -P:E reg import "%WINDIR%\Crawen\7-Zip.re
 ::Storage Optimizations::
 :::::::::::::::::::::::::
 
-:: Storage System
-fsutil behavior set memoryusage 2 >NUL 2>&1
-fsutil behavior set mftzone 2 >NUL 2>&1
-fsutil behavior set allowextchar 0 >NUL 2>&1
-fsutil behavior set Bugcheckoncorrupt 0 >NUL 2>&1
-fsutil behavior set disable8dot3 1 >NUL 2>&1
-fsutil behavior set disablecompression 1 >NUL 2>&1
+:: Storage System - AMIT
+fsutil behavior set allowextchar 0 > NUL 2>&1
+fsutil behavior set Bugcheckoncorrupt 0 > NUL 2>&1
+fsutil behavior set disable8dot3 1 > NUL 2>&1
+fsutil behavior set disablecompression 1 > NUL 2>&1
 fsutil behavior set disabledeletenotify 0 >NUL 2>&1
-fsutil behavior set disableencryption 1 >NUL 2>&1
-fsutil behavior set disablelastaccess 1 >NUL 2>&1
-fsutil behavior set encryptpagingfile 0 >NUL 2>&1
+fsutil behavior set disableencryption 1 > NUL 2>&1
+fsutil behavior set disablelastaccess 1 > NUL 2>&1
+fsutil behavior set disablespotcorruptionhandling 1 > NUL 2>&1
+fsutil behavior set encryptpagingfile 0 > NUL 2>&1
+fsutil behavior set quotanotify 86400 > NUL 2>&1
+fsutil behavior set symlinkevaluation L2L:1 > NUL 2>&1
 
-:: File System
+:: Prefetch & Superfetch
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "DontVerifyRandomDrivers" /t REG_DWORD /d "1" /f >NUL 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "LongPathsEnabled" /t REG_DWORD /d "0" /f >NUL 2>&1
-reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Superfetch" /v "StartedComponents" /t REG_DWORD /d "513347" /f >NUL 2>&1
-reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Superfetch" /v "AdminDisable" /t REG_DWORD /d "8704" /f >NUL 2>&1
-reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Superfetch" /v "AdminEnable" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /v "EnablePrefetcher" /t REG_DWORD /d "0" /f >NUL 2>&1
+reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management" /v "EnableSuperfetch" /t REG_DWORD /d "0" /f >NUL 2>&1
+
 
 :::::::::::::::::::::::::
 ::Memory Optimizations:::
@@ -438,14 +439,24 @@ if %ram% LSS 8000000 (
 	reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d "134217728" /f >NUL 2>&1
 )
 
-:: Bcdedit optimizations
-bcdedit /timeout 10 > NUL 2>&1
+:: Bcdedit
+:: HPET
 bcdedit /deletevalue useplatformclock > NUL 2>&1
 bcdedit /set disabledynamictick yes > NUL 2>&1
 bcdedit /set useplatformtick yes > NUL 2>&1
-bcdedit /set description Crawen
-bcdedit /set hypervisorlaunchtype off
+
+:: BOOT
 bcdedit /set bootmenupolicy Legacy
+bcdedit /set bootux disabled
+bcdedit /set quietboot yes
+bcdedit /set {globalsettings} custom:16000067 true
+bcdedit /set {globalsettings} custom:16000069 true
+bcdedit /set {globalsettings} custom:16000069 true
+
+:: OTHER
+bcdedit /set tpmbootentropy ForceDisable
+bcdedit /set hypervisorlaunchtype off
+bcdedit /set {current} description "Crawen"
 
 :: Disable Devices through DevManView
 devmanview /disable "System Speaker" MemoryDiagnostic
