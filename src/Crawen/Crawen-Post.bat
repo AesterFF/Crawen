@@ -59,7 +59,7 @@ reg add "HKLM\System\CurrentControlSet\Control\Session Manager\Memory Management
 :: Cancel the Disk Check when Windows starts
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager" /v "BootExecute" /t REG_MULTI_SZ /d "\0" /f >NUL 2>&1
 
-::Disable boot files defragmentation at startup
+:: Disable boot files defragmentation at startup
 reg add "HKLM\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction" /v "Enable" /t REG_SZ /d "N" /f >NUL 2>&1
 
 :: Disable updating Group Policy at startup
@@ -168,10 +168,6 @@ reg add "HKLM\System\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /
 :: Force contiguous memory allocation in the DirectX Graphics kernel
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "DpiMapIommuContiguous" /t REG_DWORD /d "1" /f >NUL 2>&1
 
-:: Better Mouse Curve
-reg add "HKCU\Control Panel\Mouse" /v "SmoothMouseXCurve" /t REG_BINARY /d 0000000000000000C0CC0C0000000000809919000000000040662600000000000033330000000000 /f >NUL 2>&1
-reg add "HKCU\Control Panel\Mouse" /v "SmoothMouseYCurve" /t REG_BINARY /d 0000000000000000000038000000000000007000000000000000A800000000000000E00000000000 /f >NUL 2>&1
-
 :: Keyboard Optimizations
 reg add "HKCU\Control Panel\Accessibility\StickyKeys" /v "Flags" /t REG_DWORD /d "0" /f >NUL 2>&1
 reg add "HKCU\Control Panel\Accessibility\Keyboard Response" /v "Flags" /t REG_DWORD /d "0" /f >NUL 2>&1
@@ -199,7 +195,7 @@ reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\MediaPlayer\Preferences" /v "Firs
 
 :: Restore and configure Photo Viewer
 for %%i in (tif tiff bmp dib gif jfif jpe jpeg jpg jxr png) do (
-reg add "HKLM\SOFTWARE\Microsoft\Windows Photo Viewer\Capabilities\FileAssociations" /v ".%%~i" /t REG_SZ /d "PhotoViewer.FileAssoc.Tiff" /f >NUL 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows Photo Viewer\Capabilities\FileAssociations" /v ".%%~i" /t REG_SZ /d "PhotoViewer.FileAssoc.Tiff" /f
 ) >NUL 2>&1
 
 :: Disable blocking downloads 
@@ -246,6 +242,7 @@ net user defaultuser0 /delete >NUL 2>&1
 :: Disable "Administrator" used using OEM
 net user administrator /active:no >NUL 2>&1 
 
+
 ::::::::::::
 ::Internet::
 ::::::::::::
@@ -265,13 +262,13 @@ reg add "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\Tcpip\QoS" /v "Do 
 reg add "HKLM\Software\Policies\Microsoft\Windows NT\DNSClient" /v "EnableMulticast" /t REG_DWORD /d "0" /f >NUL 2>&1
 
 ::Netsh
-netsh int tcp set heuristics disabled
-netsh int tcp set supplemental Internet congestionprovider=ctcp
-netsh int tcp set global timestamps=disabled
-netsh int tcp set global rsc=disabled
+netsh int tcp set heuristics disabled >NUL 2>&1
+netsh int tcp set supplemental Internet congestionprovider=ctcp >NUL 2>&1
+netsh int tcp set global timestamps=disabled >NUL 2>&1
+netsh int tcp set global rsc=disabled >NUL 2>&1
 for /f "tokens=1" %%i in ('netsh int ip show interfaces ^| findstr [0-9]') do (
 	netsh int ip set interface %%i routerdiscovery=disabled store=persistent
-)
+) >NUL 2>&1
 powershell -NoProfile -Command "Disable-NetAdapterBinding -Name "*" -ComponentID ms_tcpip6, ms_msclient, ms_pacer, ms_server" >NUL 2>&1
 
 for /f %%a in ('reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class" /v "*WakeOnMagicPacket" /s ^| findstr  "HKEY"') do (
@@ -329,35 +326,35 @@ for /f %%a in ('reg query "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\C
 
 :: ENABLE MSI MODE FOR GPU
 for /f %%a in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /L "VEN_"') do (
-	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-)
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+) >NUL 2>&1
 
 :: ENABLE MSI MODE FOR USB
 for /f %%a in ('wmic path Win32_USBController get PNPDeviceID^| findstr /L "VEN_"') do (
-	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-)
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+) >NUL 2>&1
 
 :: ENABLE MSI MODE FOR NETWORK ADAPTER
 for /f %%a in ('wmic path Win32_NetworkAdapter get PNPDeviceID ^| findstr /L "VEN_"') do (
-	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >NUL 2>&1
-)
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%a\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+) >NUL 2>&1
 
 :: Power saving
 powershell -NoProfile -Command "$devices = Get-WmiObject Win32_PnPEntity; $powerMgmt = Get-WmiObject MSPower_DeviceEnable -Namespace root\wmi; foreach ($p in $powerMgmt){$IN = $p.InstanceName.ToUpper(); foreach ($h in $devices){$PNPDI = $h.PNPDeviceID; if ($IN -like \"*$PNPDI*\"){$p.enable = $False; $p.psbase.put()}}}" >NUL 2>&1
 for /f "tokens=*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "StorPort"^| findstr "StorPort"') do reg add "%%i" /v "EnableIdlePowerManagement" /t REG_DWORD /d "0" /f >NUL 2>&1
 for /f "tokens=*" %%i in ('wmic PATH Win32_PnPEntity GET DeviceID ^| findstr "USB\VID_"') do (
- reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnhancedPowerManagementEnabled" /t REG_DWORD /d "0" /f >NUL 2>&1
- reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "AllowIdleIrpInD3" /t REG_DWORD /d "0" /f >NUL 2>&1
- reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnableSelectiveSuspend" /t REG_DWORD /d "0" /f >NUL 2>&1
- reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "DeviceSelectiveSuspended" /t REG_DWORD /d "0" /f >NUL 2>&1
- reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "SelectiveSuspendEnabled" /t REG_DWORD /d "0" /f >NUL 2>&1
- reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "SelectiveSuspendOn" /t REG_DWORD /d "0" /f >NUL 2>&1
- reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "D3ColdSupported" /t REG_DWORD /d "0" /f >NUL 2>&1
-)
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnhancedPowerManagementEnabled" /t REG_DWORD /d "0" /f
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "AllowIdleIrpInD3" /t REG_DWORD /d "0" /f
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "EnableSelectiveSuspend" /t REG_DWORD /d "0" /f
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "DeviceSelectiveSuspended" /t REG_DWORD /d "0" /f
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "SelectiveSuspendEnabled" /t REG_DWORD /d "0" /f
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "SelectiveSuspendOn" /t REG_DWORD /d "0" /f
+ reg add "HKLM\System\CurrentControlSet\Enum\%%i\Device Parameters" /v "D3ColdSupported" /t REG_DWORD /d "0" /f
+) >NUL 2>&1
 
 :: Import and set the powerplan
 powercfg -import "%WINDIR%\Crawen\CrawenOS.pow" 11111111-1111-1111-1111-111111111111 >NUL 2>&1
-powercfg /s 11111111-1111-1111-1111-111111111111 && del /f /q "%WINDIR%\Crawen\CrawenOS.pow" >NUL 2>&1
+powercfg -s 11111111-1111-1111-1111-111111111111 && del /f /q "%WINDIR%\Crawen\CrawenOS.pow" >NUL 2>&1
 powercfg -delete a1841308-3541-4fab-bc81-f71556f20b4a >NUL 2>&1
 powercfg -delete 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c >NUL 2>&1
 powercfg -delete e9a42b02-d5df-448d-aa00-03f14749eb61 >NUL 2>&1
@@ -373,13 +370,13 @@ if %LAPTOP%==0 (
 		EnhancedPowerManagementEnabled IdleInWorkingState SelectiveSuspendEnabled SelectiveSuspendOn WaitWakeEnabled 
 		WakeEnabled WdfDirectedPowerTransitionEnable) do (
 		for /f "delims=" %%b in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%a" ^| findstr "HKEY"') do (
-			reg add "%%b" /v "%%a" /t REG_DWORD /d "0" /f >NUL 2>&1
-		)
+			reg add "%%b" /v "%%a" /t REG_DWORD /d "0" /f
+		) >NUL 2>&1
 	)
 	for %%a in (DisableIdlePowerManagement) do (
 		for /f "delims=" %%b in ('reg query "HKLM\SYSTEM\CurrentControlSet\Enum" /s /f "%%a" ^| findstr "HKEY"') do (
-			reg add "%%b" /v "%%a" /t REG_DWORD /d "1" /f >NUL 2>&1
-		)
+			reg add "%%b" /v "%%a" /t REG_DWORD /d "1" /f
+		) >NUL 2>&1
 	)
 ) else (
 	powercfg /s 381b4222-f694-41f0-9685-ff5bb260df2e >NUL 2>&1
