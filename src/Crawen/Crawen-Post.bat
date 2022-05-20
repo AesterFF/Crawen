@@ -35,9 +35,9 @@ call %WINDIR%\Crawen\7zip.msi /quiet /norestart && del /f /q "%WINDIR%\Crawen\7z
 NSudoL -ShowWindowMode:hide -Wait -U:T -P:E reg import "%WINDIR%\Crawen\7-Zip.reg" >NUL 2>&1 && del /f /q "%WINDIR%\Crawen\7-Zip.reg" >NUL 2>&1
 
 
-::::::::::::::::::::::::
-::Memory Optimizations::
-::::::::::::::::::::::::
+::::::::::::::::::::::::::
+:: Memory Optimizations ::
+::::::::::::::::::::::::::
 
 :: Storage System - AMIT
 fsutil behavior set allowextchar 0 >NUL 2>&1
@@ -210,6 +210,9 @@ reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Attachments" /v
 :: Disable PerfTask
 reg add "HKLM\Software\Policies\Microsoft\Windows\WDI\{9c5a40da-b965-4fc3-8781-88dd50a6299d}" /v "ScenarioExecutionEnabled" /t REG_DWORD /d "0" /f >NUL 2>&1
 
+:: Show the desktop wallpaper at its highest quality
+reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /t REG_DWORD /v "JPEGImportQuality" /d "100" >NUL 2>&1
+
 :: Disable Transparency
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d "0" /f >NUL 2>&1
 
@@ -220,6 +223,12 @@ reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics" /v "Enab
 
 :: Do not reduce sounds while calling
 reg add "HKCU\SOFTWARE\Microsoft\Multimedia\Audio" /v "UserDuckingPreference" /t REG_DWORD /d "3" /f >NUL 2>&1
+
+:: Change OEM information
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation" /t REG_SZ /v "Manufacturer" /d "CrawenOS" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation" /t REG_SZ /v "Model" /d "v0.2" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation" /t REG_SZ /v "SupportURL" /d "https://discord.gg/crawenos" /f >NUL 2>&1
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation" /t REG_SZ /v "SupportHours" /d "At any moment." /f >NUL 2>&1
 
 :: Telemetry
 reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "MaxTelemetryAllowed" /t REG_DWORD /d "0" /f >NUL 2>&1
@@ -243,7 +252,7 @@ reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v "fAll
 reg delete "HKEY_CLASSES_ROOT\Folder\ShellEx\ContextMenuHandlers\Library Location" /f >NUL 2>&1
 reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Folder\ShellEx\ContextMenuHandlers\Library Location" /f >NUL 2>&1
 
-:: Remove Share in context menu
+:: remove Share in context menu
 reg delete "HKEY_CLASSES_ROOT\*\shellex\ContextMenuHandlers\ModernSharing" /f >NUL 2>&1
 
 :: Disable Sleep Study
@@ -259,9 +268,9 @@ net user defaultuser0 /delete >NUL 2>&1
 net user administrator /active:no >NUL 2>&1 
 
 
-::::::::::::
-::Internet::
-::::::::::::
+::::::::::::::
+:: Internet ::
+::::::::::::::
 
 ::Disable Nagle's Algorithm
 reg add "HKLM\Software\Microsoft\MSMQ\Parameters" /v "TCPNoDelay" /t REG_DWORD /d "00000001" /f >NUL 2>&1  
@@ -645,20 +654,18 @@ reg add "HKLM\System\CurrentControlSet\Services\wcnfs" /v "Start" /t REG_DWORD /
 reg add "HKLM\System\CurrentControlSet\Services\WindowsTrustedRTProxy" /v "Start" /t REG_DWORD /d "4" /f >NUL 2>&1
 
 
-:::::::::::::
-::FINISHING::
-:::::::::::::
+:::::::::::::::
+:: FINISHING ::
+:::::::::::::::
 
 :: Accept Variable
 break>C:\Users\Public\success.txt
 echo COMPLETED > C:\Users\Public\success.txt
 
-:: ADD Configurator App RunOnce
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v "Configurator" /t REG_SZ /d "%WINDIR%\Crawen\Configurator\Configurator.exe" /f >NUL 2>&1
-
 :: Misc Tweaks
 lodctr /r >NUL 2>&1
 lodctr /r >NUL 2>&1
 
+:: Delete the post setup
 DEL "%~f0"
 exit
