@@ -15,14 +15,16 @@ You can feel safe and work without any dangers.
 
 While installing our OS you will get preinstalled:
 
-- Custom Powerplan
-- Optimized Services and Drivers
-- Disabled Power Saving
-- Disabled FSO
-- Disabled Mitigations
-- Optimized SSD and CPU
-- MSI Mode
-- and more...
+· Custom Powerplan
+· Optimized Services and Drivers
+· Disabled Scheduled Tasks
+· Disabled Power Saving
+· Disabled FSO
+· Disabled Mitigations
+· Optimized SSD and CPU
+· Configurator App
+· MSI Mode
+· and more...
 
 <h2> Discord </h2>
 
