@@ -1,0 +1,16 @@
+1. Click "Download Indexes Only"
+2. Wait for Indexes to download
+3. Tick the Devices you'd like to update drivers for. Remember, less is usually better so don't download them all unless you need to
+4. Done!
+
+Minimal:
+- Networking (Will loose network tweaks, check the troubleshooting folder to redo them!)
+- USB
+- Graphics (from your vendor's website, not SDIO)
+
+Recommended:
+- Networking (Will loose network tweaks, check the troubleshooting folder to redo them!)
+- USB
+- Graphics (from your vendor's website, not SDIO)
+- Audio 
+- Bluetooth
