@@ -4,6 +4,7 @@ setlocal ENABLEDELAYEDEXPANSION
 :: CHECK FOR ADMIN PRIVILEGES
 echo This Script has to be run as administrator, otherwise it won't work properly!
 
+:restartStart
 :: Rename Start Menu
 chdir /d C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy
 
