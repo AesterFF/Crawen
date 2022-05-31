@@ -27,7 +27,7 @@ sc config ClipSVC start=demand >nul 2>&1
 sc config FileInfo start=boot >nul 2>&1
 sc config FileCrypt start=system >nul 2>&1
 
-echo Store and has been disabled. Please restart your computer.
+echo Store has been disabled. Please restart your computer.
 pause
 
 exit /b 0
